@@ -14,7 +14,13 @@ class ApiService {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-      throw new Error(error.detail || `HTTP ${response.status}`);
+      let errMsg = error.detail;
+      if (Array.isArray(errMsg)) {
+        errMsg = errMsg.map((e: any) => `${e.loc?.slice(1).join('.')}: ${e.msg}`).join(', ');
+      } else if (typeof errMsg === 'object') {
+        errMsg = JSON.stringify(errMsg);
+      }
+      throw new Error(errMsg || `HTTP ${response.status}`);
     }
 
     return response.json();
