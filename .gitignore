@@ -1,0 +1,9 @@
+node_modules/
+dist/
+__pycache__/
+clean.txt
+error.log
+out_err.txt
+out2.txt
+test_predict.py
+
