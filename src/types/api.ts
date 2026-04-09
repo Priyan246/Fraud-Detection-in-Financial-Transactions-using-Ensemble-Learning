@@ -7,7 +7,7 @@ export interface Transaction {
   gender: string;
   city: string;
   state: string;
-  zip: number;
+  zip: string;
   lat: number;
   long: number;
   city_pop: number;

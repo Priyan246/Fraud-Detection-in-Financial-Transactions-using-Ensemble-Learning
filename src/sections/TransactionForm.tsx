@@ -155,7 +155,7 @@ export default function TransactionForm({ onSubmit, isLoading }: TransactionForm
       gender: t.gender,
       city: t.city,
       state: t.state,
-      zip: parseInt(t.zip) || 0,
+      zip: t.zip,
       lat: parseFloat(t.lat) || 0,
       long: parseFloat(t.long) || 0,
       city_pop: parseInt(t.city_pop) || 0,

@@ -244,13 +244,22 @@ async def predict_fraud(request: PredictRequest):
             elif prob >= 0.85:
                 status = "Uncertain"
 
-        predictions.append({
+        pred_dict = {
             "fraud_probability": float(prob),
             "is_fraud_predicted": is_fraud,
             "status": status,
             "threshold": threshold,
             "model_used": used
-        })
+        }
+        
+        if request.return_all:
+            if lgb_model: pred_dict["lgb_score"] = float(lgb_model.predict_proba(x_vec)[0][1])
+            if xgb_model: 
+                dmat = xgb.DMatrix(x_vec)
+                pred_dict["xgb_score"] = float(xgb_model.predict(dmat)[0])
+            if cb_model: pred_dict["cb_score"] = float(cb_model.predict_proba(x_vec)[0][1])
+
+        predictions.append(pred_dict)
 
     return {
         "predictions": predictions,
