@@ -231,10 +231,10 @@ async def predict_fraud(request: PredictRequest):
         
         # Tiered threshold logic
         if used == "ensemble":
-            if prob >= 0.97:
+            if prob >= 0.5:
                 status = "Fraud"
                 is_fraud = True
-            elif prob >= 0.90:
+            elif prob >= 0.60:
                 status = "Uncertain"
         else:
             # Custom thresholds for the individual models

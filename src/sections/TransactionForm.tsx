@@ -1,484 +1,389 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  CreditCard, 
-  Store, 
-  MapPin, 
-  Briefcase,
-  Clock,
-  Navigation,
-  Send,
-  Loader2,
-  Plus,
-  Trash2,
-  ChevronDown,
-  ChevronUp
-} from 'lucide-react';
+import { Plus, Trash2, Send, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
-import type { Transaction, TransactionFormData, ModelType } from '@/types/api';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import type { Transaction, ModelType } from '@/types/api';
 
 interface TransactionFormProps {
   onSubmit: (transactions: Transaction[], model: ModelType, returnAll: boolean) => void;
   isLoading: boolean;
 }
 
-const initialFormData: TransactionFormData = {
-  trans_date_trans_time: new Date().toISOString().slice(0, 16),
-  cc_num: '',
-  merchant: '',
-  category: 'grocery_pos',
-  amt: '',
-  gender: 'M',
-  city: '',
-  state: '',
-  zip: '',
-  lat: '',
-  long: '',
-  city_pop: '',
-  job: '',
-  dob: '1985-04-12',
-  unix_time: Math.floor(Date.now() / 1000).toString(),
-  merch_lat: '',
-  merch_long: '',
-};
-
-const categories = [
-  'grocery_pos', 'gas_transport', 'home', 'shopping_pos', 
-  'kids_pets', 'entertainment', 'food_dining', 'personal_care',
-  'health_fitness', 'misc_pos', 'misc_net', 'grocery_net',
-  'shopping_net', 'travel', 'utilities'
+const CATEGORIES = [
+  'grocery_pos', 'entertainment', 'gas_transport', 'misc_net', 'grocery_net',
+  'shopping_net', 'shopping_pos', 'misc_pos', 'food_dining', 'personal_care',
+  'health_fitness', 'travel', 'kids_pets', 'home',
 ];
 
-const states = [
-  'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
-  'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
-  'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
-  'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
-  'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
+const US_STATES = [
+  'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA',
+  'KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
+  'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT',
+  'VA','WA','WV','WI','WY',
 ];
 
-const FormSection = ({ 
-  title, 
-  icon: Icon, 
-  children,
-  defaultOpen = false
-}: { 
-  title: string; 
-  icon: any; 
-  children: React.ReactNode;
-  defaultOpen?: boolean;
-}) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-  
+function makeBlankTransaction(): Transaction {
+  const now = new Date();
+  return {
+    trans_date_trans_time: now.toISOString().slice(0, 19).replace('T', ' '),
+    cc_num: '',
+    merchant: '',
+    category: 'shopping_pos',
+    amt: 0,
+    gender: 'M',
+    city: '',
+    state: 'CA',
+    zip: '',
+    lat: 0,
+    long: 0,
+    city_pop: 50000,
+    job: '',
+    dob: '1990-01-01',
+    unix_time: Math.floor(now.getTime() / 1000),
+    merch_lat: 0,
+    merch_long: 0,
+  };
+}
+
+function TxField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="border border-border rounded-lg overflow-hidden bg-card">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-3 bg-muted hover:bg-muted/80 transition-colors"
-      >
-        <div className="flex items-center gap-2">
-          <Icon className="w-4 h-4 text-muted-foreground" />
-          <span className="text-sm font-medium text-foreground">{title}</span>
-        </div>
-        {isOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-      </button>
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ height: 0 }}
-            animate={{ height: 'auto' }}
-            exit={{ height: 0 }}
-            className="overflow-hidden"
-          >
-            <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {children}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <div className="space-y-1.5">
+      <Label className="text-xs text-muted-foreground">{label}</Label>
+      {children}
     </div>
   );
-};
+}
 
-const FormField = ({ 
-  label, 
-  children, 
-  required = false 
-}: { 
-  label: string; 
-  children: React.ReactNode;
-  required?: boolean;
-}) => (
-  <div className="space-y-1.5">
-    <Label className="text-xs text-muted-foreground flex items-center gap-1">
-      {label}
-      {required && <span className="text-foreground">*</span>}
-    </Label>
-    {children}
-  </div>
-);
+function TransactionRow({
+  tx,
+  index,
+  onChange,
+  onRemove,
+  canRemove,
+}: {
+  tx: Transaction;
+  index: number;
+  onChange: (updated: Transaction) => void;
+  onRemove: () => void;
+  canRemove: boolean;
+}) {
+  const [expanded, setExpanded] = useState(index === 0);
+
+  function set<K extends keyof Transaction>(key: K, value: Transaction[K]) {
+    onChange({ ...tx, [key]: value });
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-muted/50 transition-colors"
+      >
+        <span className="text-sm font-medium text-foreground">
+          Transaction #{index + 1}
+          {tx.amt > 0 && (
+            <span className="ml-2 text-xs text-muted-foreground font-normal">
+              ${tx.amt} · {tx.merchant || 'unnamed'}
+            </span>
+          )}
+        </span>
+        <div className="flex items-center gap-2">
+          {canRemove && (
+            <span
+              role="button"
+              onClick={(e) => { e.stopPropagation(); onRemove(); }}
+              className="p-1 rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-500 transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </span>
+          )}
+          {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+        </div>
+      </button>
+
+      {expanded && (
+        <div className="px-4 pb-4 border-t border-border">
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <TxField label="Date & Time">
+              <Input
+                type="datetime-local"
+                value={tx.trans_date_trans_time.replace(' ', 'T')}
+                onChange={e => {
+                  const val = e.target.value.replace('T', ' ');
+                  const unix = Math.floor(new Date(e.target.value).getTime() / 1000);
+                  onChange({ ...tx, trans_date_trans_time: val, unix_time: unix });
+                }}
+                className="text-xs h-8"
+              />
+            </TxField>
+
+            <TxField label="Amount ($)">
+              <Input
+                type="number"
+                min={0}
+                step={0.01}
+                value={tx.amt}
+                onChange={e => set('amt', parseFloat(e.target.value) || 0)}
+                className="text-xs h-8"
+                placeholder="0.00"
+              />
+            </TxField>
+
+            <TxField label="Card Number">
+              <Input
+                value={tx.cc_num}
+                onChange={e => set('cc_num', e.target.value)}
+                className="text-xs h-8"
+                placeholder="1234567890123456"
+              />
+            </TxField>
+
+            <TxField label="Merchant">
+              <Input
+                value={tx.merchant}
+                onChange={e => set('merchant', e.target.value)}
+                className="text-xs h-8"
+                placeholder="fraud_Store Name"
+              />
+            </TxField>
+
+            <TxField label="Category">
+              <Select value={tx.category} onValueChange={v => set('category', v)}>
+                <SelectTrigger className="text-xs h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map(c => (
+                    <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </TxField>
+
+            <TxField label="Gender">
+              <Select value={tx.gender} onValueChange={v => set('gender', v)}>
+                <SelectTrigger className="text-xs h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="M" className="text-xs">Male</SelectItem>
+                  <SelectItem value="F" className="text-xs">Female</SelectItem>
+                </SelectContent>
+              </Select>
+            </TxField>
+
+            <TxField label="City">
+              <Input
+                value={tx.city}
+                onChange={e => set('city', e.target.value)}
+                className="text-xs h-8"
+                placeholder="San Francisco"
+              />
+            </TxField>
+
+            <TxField label="State">
+              <Select value={tx.state} onValueChange={v => set('state', v)}>
+                <SelectTrigger className="text-xs h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {US_STATES.map(s => (
+                    <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </TxField>
+
+            <TxField label="ZIP">
+              <Input
+                value={tx.zip}
+                onChange={e => set('zip', e.target.value)}
+                className="text-xs h-8"
+                placeholder="94103"
+              />
+            </TxField>
+
+            <TxField label="City Population">
+              <Input
+                type="number"
+                value={tx.city_pop}
+                onChange={e => set('city_pop', parseInt(e.target.value) || 0)}
+                className="text-xs h-8"
+              />
+            </TxField>
+
+            <TxField label="Date of Birth">
+              <Input
+                type="date"
+                value={tx.dob}
+                onChange={e => set('dob', e.target.value)}
+                className="text-xs h-8"
+              />
+            </TxField>
+
+            <TxField label="Job">
+              <Input
+                value={tx.job}
+                onChange={e => set('job', e.target.value)}
+                className="text-xs h-8"
+                placeholder="Software Engineer"
+              />
+            </TxField>
+          </div>
+
+          {/* Location section */}
+          <p className="text-xs font-medium text-muted-foreground mt-4 mb-2">Cardholder Location</p>
+          <div className="grid grid-cols-2 gap-3">
+            <TxField label="Latitude">
+              <Input
+                type="number"
+                step="any"
+                value={tx.lat}
+                onChange={e => set('lat', parseFloat(e.target.value) || 0)}
+                className="text-xs h-8"
+              />
+            </TxField>
+            <TxField label="Longitude">
+              <Input
+                type="number"
+                step="any"
+                value={tx.long}
+                onChange={e => set('long', parseFloat(e.target.value) || 0)}
+                className="text-xs h-8"
+              />
+            </TxField>
+          </div>
+
+          <p className="text-xs font-medium text-muted-foreground mt-4 mb-2">Merchant Location</p>
+          <div className="grid grid-cols-2 gap-3">
+            <TxField label="Merchant Latitude">
+              <Input
+                type="number"
+                step="any"
+                value={tx.merch_lat}
+                onChange={e => set('merch_lat', parseFloat(e.target.value) || 0)}
+                className="text-xs h-8"
+              />
+            </TxField>
+            <TxField label="Merchant Longitude">
+              <Input
+                type="number"
+                step="any"
+                value={tx.merch_long}
+                onChange={e => set('merch_long', parseFloat(e.target.value) || 0)}
+                className="text-xs h-8"
+              />
+            </TxField>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function TransactionForm({ onSubmit, isLoading }: TransactionFormProps) {
-  const [transactions, setTransactions] = useState<TransactionFormData[]>([{ ...initialFormData }]);
+  const [transactions, setTransactions] = useState<Transaction[]>([makeBlankTransaction()]);
   const [model, setModel] = useState<ModelType>('ensemble');
   const [returnAll, setReturnAll] = useState(false);
 
-  const addTransaction = () => {
-    setTransactions([...transactions, { ...initialFormData, cc_num: transactions[0]?.cc_num || '' }]);
-  };
+  function addTransaction() {
+    setTransactions(prev => [...prev, makeBlankTransaction()]);
+  }
 
-  const removeTransaction = (index: number) => {
-    if (transactions.length > 1) {
-      setTransactions(transactions.filter((_, i) => i !== index));
-    }
-  };
+  function removeTransaction(index: number) {
+    setTransactions(prev => prev.filter((_, i) => i !== index));
+  }
 
-  const updateTransaction = (index: number, field: keyof TransactionFormData, value: string) => {
-    const updated = [...transactions];
-    updated[index] = { ...updated[index], [field]: value };
-    setTransactions(updated);
-  };
+  function updateTransaction(index: number, updated: Transaction) {
+    setTransactions(prev => prev.map((t, i) => (i === index ? updated : t)));
+  }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const formattedTransactions: Transaction[] = transactions.map(t => ({
-      trans_date_trans_time: t.trans_date_trans_time,
-      cc_num: t.cc_num,
-      merchant: t.merchant,
-      category: t.category,
-      amt: parseFloat(t.amt) || 0,
-      gender: t.gender,
-      city: t.city,
-      state: t.state,
-      zip: t.zip,
-      lat: parseFloat(t.lat) || 0,
-      long: parseFloat(t.long) || 0,
-      city_pop: parseInt(t.city_pop) || 0,
-      job: t.job,
-      dob: t.dob,
-      unix_time: parseInt(t.unix_time) || Math.floor(Date.now() / 1000),
-      merch_lat: parseFloat(t.merch_lat) || 0,
-      merch_long: parseFloat(t.merch_long) || 0,
-    }));
-    onSubmit(formattedTransactions, model, returnAll);
-  };
-
-  const fillSampleData = (index: number) => {
-    const sampleData: Partial<TransactionFormData> = {
-      cc_num: '4111111111111111',
-      merchant: 'fraud_Sample Merchant Inc',
-      category: 'grocery_pos',
-      amt: '42.50',
-      city: 'Springfield',
-      state: 'IL',
-      zip: '62701',
-      lat: '39.7817',
-      long: '-89.6501',
-      city_pop: '116250',
-      job: 'Teacher',
-      merch_lat: '39.80',
-      merch_long: '-89.66',
-    };
-    const updated = [...transactions];
-    updated[index] = { ...updated[index], ...sampleData };
-    setTransactions(updated);
-  };
+    onSubmit(transactions, model, returnAll);
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {transactions.map((transaction, index) => (
-        <Card key={index} className="bg-card border-border">
-          <CardContent className="p-4 space-y-4">
-            {transactions.length > 1 && (
-              <div className="flex items-center justify-between pb-3 border-b border-border">
-                <span className="text-sm font-medium text-foreground">Transaction #{index + 1}</span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeTransaction(index)}
-                  className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
+      {/* Model selector */}
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-4">
+        <div className="flex-1 min-w-[160px] space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Model</Label>
+          <Select value={model} onValueChange={v => setModel(v as ModelType)}>
+            <SelectTrigger className="text-xs h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ensemble" className="text-xs">Ensemble (all models)</SelectItem>
+              <SelectItem value="LightGBM" className="text-xs">LightGBM</SelectItem>
+              <SelectItem value="XGBoost" className="text-xs">XGBoost</SelectItem>
+              <SelectItem value="CatBoost" className="text-xs">CatBoost</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-            <FormSection title="Card Information" icon={CreditCard} defaultOpen={true}>
-              <FormField label="Card Number" required>
-                <Input
-                  value={transaction.cc_num}
-                  onChange={(e) => updateTransaction(index, 'cc_num', e.target.value)}
-                  placeholder="4111111111111111"
-                  className="h-9 bg-background border-border text-foreground placeholder:text-muted-foreground"
-                />
-              </FormField>
-              <FormField label="Amount ($)" required>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={transaction.amt}
-                  onChange={(e) => updateTransaction(index, 'amt', e.target.value)}
-                  placeholder="42.50"
-                  className="h-9 bg-background border-border text-foreground placeholder:text-muted-foreground"
-                />
-              </FormField>
-              <FormField label="Gender">
-                <Select 
-                  value={transaction.gender} 
-                  onValueChange={(v) => updateTransaction(index, 'gender', v as 'M' | 'F')}
-                >
-                  <SelectTrigger className="h-9 bg-background border-border text-foreground">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    <SelectItem value="M" className="text-foreground">Male</SelectItem>
-                    <SelectItem value="F" className="text-foreground">Female</SelectItem>
-                  </SelectContent>
-                </Select>
-              </FormField>
-              <FormField label="Date of Birth">
-                <Input
-                  type="date"
-                  value={transaction.dob}
-                  onChange={(e) => updateTransaction(index, 'dob', e.target.value)}
-                  className="h-9 bg-background border-border text-foreground"
-                />
-              </FormField>
-            </FormSection>
+        <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-muted-foreground mt-4">
+          <input
+            type="checkbox"
+            checked={returnAll}
+            onChange={e => setReturnAll(e.target.checked)}
+            className="rounded"
+          />
+          Return all model scores
+        </label>
+      </div>
 
-            <FormSection title="Merchant Information" icon={Store}>
-              <FormField label="Merchant Name" required>
-                <Input
-                  value={transaction.merchant}
-                  onChange={(e) => updateTransaction(index, 'merchant', e.target.value)}
-                  placeholder="fraud_Sample Merchant Inc"
-                  className="h-9 bg-background border-border text-foreground placeholder:text-muted-foreground"
-                />
-              </FormField>
-              <FormField label="Category">
-                <Select 
-                  value={transaction.category} 
-                  onValueChange={(v) => updateTransaction(index, 'category', v)}
-                >
-                  <SelectTrigger className="h-9 bg-background border-border text-foreground">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    {categories.map(cat => (
-                      <SelectItem key={cat} value={cat} className="text-foreground">{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormField>
-              <FormField label="Transaction Time">
-                <Input
-                  type="datetime-local"
-                  value={transaction.trans_date_trans_time}
-                  onChange={(e) => updateTransaction(index, 'trans_date_trans_time', e.target.value)}
-                  className="h-9 bg-background border-border text-foreground"
-                />
-              </FormField>
-            </FormSection>
+      {/* Transaction rows */}
+      <div className="space-y-3">
+        {transactions.map((tx, i) => (
+          <TransactionRow
+            key={i}
+            tx={tx}
+            index={i}
+            onChange={updated => updateTransaction(i, updated)}
+            onRemove={() => removeTransaction(i)}
+            canRemove={transactions.length > 1}
+          />
+        ))}
+      </div>
 
-            <FormSection title="Customer Location" icon={MapPin}>
-              <FormField label="City">
-                <Input
-                  value={transaction.city}
-                  onChange={(e) => updateTransaction(index, 'city', e.target.value)}
-                  placeholder="Springfield"
-                  className="h-9 bg-background border-border text-foreground placeholder:text-muted-foreground"
-                />
-              </FormField>
-              <FormField label="State">
-                <Select 
-                  value={transaction.state} 
-                  onValueChange={(v) => updateTransaction(index, 'state', v)}
-                >
-                  <SelectTrigger className="h-9 bg-background border-border text-foreground">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    {states.map(s => (
-                      <SelectItem key={s} value={s} className="text-foreground">{s}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormField>
-              <FormField label="ZIP Code">
-                <Input
-                  value={transaction.zip}
-                  onChange={(e) => updateTransaction(index, 'zip', e.target.value)}
-                  placeholder="62701"
-                  className="h-9 bg-background border-border text-foreground placeholder:text-muted-foreground"
-                />
-              </FormField>
-              <FormField label="Latitude">
-                <Input
-                  type="number"
-                  step="0.0001"
-                  value={transaction.lat}
-                  onChange={(e) => updateTransaction(index, 'lat', e.target.value)}
-                  placeholder="39.7817"
-                  className="h-9 bg-background border-border text-foreground placeholder:text-muted-foreground"
-                />
-              </FormField>
-              <FormField label="Longitude">
-                <Input
-                  type="number"
-                  step="0.0001"
-                  value={transaction.long}
-                  onChange={(e) => updateTransaction(index, 'long', e.target.value)}
-                  placeholder="-89.6501"
-                  className="h-9 bg-background border-border text-foreground placeholder:text-muted-foreground"
-                />
-              </FormField>
-              <FormField label="City Population">
-                <Input
-                  type="number"
-                  value={transaction.city_pop}
-                  onChange={(e) => updateTransaction(index, 'city_pop', e.target.value)}
-                  placeholder="116250"
-                  className="h-9 bg-background border-border text-foreground placeholder:text-muted-foreground"
-                />
-              </FormField>
-            </FormSection>
-
-            <FormSection title="Merchant Location" icon={Navigation}>
-              <FormField label="Merchant Latitude">
-                <Input
-                  type="number"
-                  step="0.0001"
-                  value={transaction.merch_lat}
-                  onChange={(e) => updateTransaction(index, 'merch_lat', e.target.value)}
-                  placeholder="39.80"
-                  className="h-9 bg-background border-border text-foreground placeholder:text-muted-foreground"
-                />
-              </FormField>
-              <FormField label="Merchant Longitude">
-                <Input
-                  type="number"
-                  step="0.0001"
-                  value={transaction.merch_long}
-                  onChange={(e) => updateTransaction(index, 'merch_long', e.target.value)}
-                  placeholder="-89.66"
-                  className="h-9 bg-background border-border text-foreground placeholder:text-muted-foreground"
-                />
-              </FormField>
-            </FormSection>
-
-            <FormSection title="Additional Info" icon={Briefcase}>
-              <FormField label="Job">
-                <Input
-                  value={transaction.job}
-                  onChange={(e) => updateTransaction(index, 'job', e.target.value)}
-                  placeholder="Teacher"
-                  className="h-9 bg-background border-border text-foreground placeholder:text-muted-foreground"
-                />
-              </FormField>
-              <FormField label="Unix Timestamp">
-                <Input
-                  type="number"
-                  value={transaction.unix_time}
-                  onChange={(e) => updateTransaction(index, 'unix_time', e.target.value)}
-                  placeholder={Math.floor(Date.now() / 1000).toString()}
-                  className="h-9 bg-background border-border text-foreground placeholder:text-muted-foreground"
-                />
-              </FormField>
-            </FormSection>
-
-            <div className="flex justify-end">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => fillSampleData(index)}
-                className="border-border text-foreground hover:bg-muted"
-              >
-                Fill Sample Data
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-
-      {/* Model Selection */}
-      <Card className="bg-card border-border">
-        <CardContent className="p-4 space-y-4">
-          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-            <Clock className="w-4 h-4 text-muted-foreground" />
-            Model Configuration
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Prediction Model</Label>
-              <Select value={model} onValueChange={(v) => setModel(v as ModelType)}>
-                <SelectTrigger className="h-9 bg-background border-border text-foreground">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  <SelectItem value="ensemble" className="text-foreground">Ensemble (Recommended)</SelectItem>
-                  <SelectItem value="LightGBM" className="text-foreground">LightGBM</SelectItem>
-                  <SelectItem value="XGBoost" className="text-foreground">XGBoost</SelectItem>
-                  <SelectItem value="CatBoost" className="text-foreground">CatBoost</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <div className="relative">
-                  <input
-                    type="checkbox"
-                    checked={returnAll}
-                    onChange={(e) => setReturnAll(e.target.checked)}
-                    className="sr-only"
-                  />
-                  <div className={`w-10 h-5 rounded-full transition-colors ${returnAll ? 'bg-foreground' : 'bg-muted'}`}>
-                    <div className={`w-4 h-4 rounded-full bg-background shadow transition-transform ${returnAll ? 'translate-x-5' : 'translate-x-0.5'} mt-0.5`} />
-                  </div>
-                </div>
-                <span className="text-sm text-muted-foreground">
-                  Show all model scores
-                </span>
-              </label>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Action Buttons */}
-      <div className="flex flex-wrap gap-3">
+      <div className="flex gap-3">
         <Button
           type="button"
           variant="outline"
           onClick={addTransaction}
-          className="h-9 border-border text-foreground hover:bg-muted"
+          className="flex-1 border-border text-sm"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add Transaction
         </Button>
-        
+
         <Button
           type="submit"
           disabled={isLoading}
-          className="h-9 bg-foreground text-background hover:bg-foreground/90"
+          className="flex-1 bg-foreground text-background hover:bg-foreground/90 text-sm"
         >
           {isLoading ? (
             <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Analyzing...
+              <svg className="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              </svg>
+              Analyzing…
             </>
           ) : (
             <>
               <Send className="w-4 h-4 mr-2" />
-              Detect Fraud
+              Analyze {transactions.length > 1 ? `${transactions.length} Transactions` : 'Transaction'}
             </>
           )}
         </Button>

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Toaster, toast } from 'sonner';
-import { 
-  Shield, 
-  Settings, 
-  BarChart3, 
+import {
+  Shield,
+  Settings,
+  BarChart3,
   CreditCard,
   Moon,
   Sun
@@ -16,7 +16,7 @@ import ResultsDisplay from '@/sections/ResultsDisplay';
 import ApiStatus from '@/sections/ApiStatus';
 import BackgroundAnimation from '@/components/BackgroundAnimation';
 import { apiService } from '@/services/api';
-import type { Transaction, PredictionResult, ModelType } from '@/types/api';
+import type { Transaction, PredictionResult, ModelType } from '@/types/api - Copy';
 
 function App() {
   const [results, setResults] = useState<PredictionResult[] | null>(null);
@@ -35,7 +35,7 @@ function App() {
       const response = await apiService.predict(transactions, model, returnAll);
       setResults(response.predictions);
       setActiveTab('results');
-      
+
       const fraudCount = response.predictions.filter(r => r.is_fraud_predicted).length;
       if (fraudCount > 0) {
         toast.warning(`${fraudCount} transaction(s) flagged as potentially fraudulent`);
@@ -55,8 +55,8 @@ function App() {
 
   return (
     <div className={`min-h-screen bg-background text-foreground transition-colors duration-300 ${isDark ? 'dark' : ''}`}>
-      <Toaster 
-        position="top-right" 
+      <Toaster
+        position="top-right"
         theme={isDark ? 'dark' : 'light'}
         toastOptions={{
           style: {
@@ -66,9 +66,9 @@ function App() {
           },
         }}
       />
-      
+
       <BackgroundAnimation />
-      
+
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
         <div className="container mx-auto px-4 py-3">
@@ -79,7 +79,7 @@ function App() {
               </div>
               <h1 className="text-lg font-semibold text-foreground">Fraud Detection</h1>
             </div>
-            
+
             <Button
               variant="outline"
               size="icon"
@@ -100,14 +100,14 @@ function App() {
       <main className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="bg-card border border-border p-1 rounded-lg w-full justify-start">
-            <TabsTrigger 
-              value="detect" 
+            <TabsTrigger
+              value="detect"
               className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-md px-4 py-2 text-sm text-foreground"
             >
               <CreditCard className="w-4 h-4 mr-2" />
               Detect
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="results"
               disabled={!results}
               className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-md px-4 py-2 text-sm text-foreground"
@@ -120,7 +120,7 @@ function App() {
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="status"
               className="data-[state=active]:bg-foreground data-[state=active]:text-background rounded-md px-4 py-2 text-sm text-foreground"
             >

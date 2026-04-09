@@ -1,55 +1,38 @@
-import type { Transaction, PredictResponse, HealthStatus, ModelMetadata } from '@/types/api';
+import type { Transaction, PredictResponse, HealthResponse, MetadataResponse, ModelType } from '@/types/api';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-class ApiService {
-  private async fetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
-    });
+async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    headers: { 'Content-Type': 'application/json' },
+    ...options,
+  });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-      let errMsg = error.detail;
-      if (Array.isArray(errMsg)) {
-        errMsg = errMsg.map((e: any) => `${e.loc?.slice(1).join('.')}: ${e.msg}`).join(', ');
-      } else if (typeof errMsg === 'object') {
-        errMsg = JSON.stringify(errMsg);
-      }
-      throw new Error(errMsg || `HTTP ${response.status}`);
-    }
-
-    return response.json();
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => res.statusText);
+    throw new Error(`API error ${res.status}: ${errorText}`);
   }
 
-  async predict(transactions: Transaction[], model: string = 'ensemble', returnAll: boolean = false): Promise<PredictResponse> {
-    return this.fetch<PredictResponse>('/predict', {
-      method: 'POST',
-      body: JSON.stringify({
-        transactions,
-        model,
-        return_all: returnAll,
-      }),
-    });
-  }
-
-  async getHealth(): Promise<HealthStatus> {
-    return this.fetch<HealthStatus>('/health');
-  }
-
-  async getMetadata(): Promise<ModelMetadata> {
-    return this.fetch<ModelMetadata>('/metadata');
-  }
-
-  async resetCardHistory(): Promise<{ status: string }> {
-    return this.fetch<{ status: string }>('/reset_card_history', {
-      method: 'POST',
-    });
-  }
+  return res.json() as Promise<T>;
 }
 
-export const apiService = new ApiService();
+export const apiService = {
+  predict(transactions: Transaction[], model: ModelType = 'ensemble', returnAll = false): Promise<PredictResponse> {
+    return request<PredictResponse>('/predict', {
+      method: 'POST',
+      body: JSON.stringify({ transactions, model, return_all: returnAll }),
+    });
+  },
+
+  health(): Promise<HealthResponse> {
+    return request<HealthResponse>('/health');
+  },
+
+  metadata(): Promise<MetadataResponse> {
+    return request<MetadataResponse>('/metadata');
+  },
+
+  resetCardHistory(): Promise<{ status: string }> {
+    return request<{ status: string }>('/reset_card_history', { method: 'POST' });
+  },
+};

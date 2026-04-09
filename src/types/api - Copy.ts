@@ -1,3 +1,5 @@
+export type ModelType = 'ensemble' | 'LightGBM' | 'XGBoost' | 'CatBoost';
+
 export interface Transaction {
   trans_date_trans_time: string;
   cc_num: string;
@@ -21,6 +23,7 @@ export interface Transaction {
 export interface PredictionResult {
   fraud_probability: number;
   is_fraud_predicted: boolean;
+  status: 'Safe' | 'Uncertain' | 'Fraud';
   threshold: number;
   model_used: string;
   lgb_score?: number;
@@ -33,37 +36,14 @@ export interface PredictResponse {
   n_transactions: number;
 }
 
-export interface HealthStatus {
+export interface HealthResponse {
   status: string;
   n_features: number;
   models_loaded: string[];
   card_registry_size: number;
 }
 
-export interface ModelMetadata {
+export interface MetadataResponse {
   thresholds: Record<string, number>;
   cat_feature_indices: number[];
-  feature_list?: string[];
-}
-
-export type ModelType = 'ensemble' | 'LightGBM' | 'XGBoost' | 'CatBoost';
-
-export interface TransactionFormData {
-  trans_date_trans_time: string;
-  cc_num: string;
-  merchant: string;
-  category: string;
-  amt: string;
-  gender: 'M' | 'F';
-  city: string;
-  state: string;
-  zip: string;
-  lat: string;
-  long: string;
-  city_pop: string;
-  job: string;
-  dob: string;
-  unix_time: string;
-  merch_lat: string;
-  merch_long: string;
 }
