@@ -7,33 +7,40 @@ This project expands upon the foundational research presented by **Fahad Almalki
 ---
 
 ## 📌 LinkedIn Post Draft
-*You can copy and directly use this draft for your LinkedIn announcement!*
+We are excited to share our Machine Learning project: a Credit Card Fraud Detection Pipeline built on Ensemble Learning and Explainable AI.
 
-**[Draft Start]**
-Excited to share my latest machine learning project: A highly accurate Credit Card Fraud Detection Pipeline using Ensemble Methods and Explainable AI! 💳🔍
+Fraud detection in financial systems is challenging — datasets are highly imbalanced, patterns are subtle, and decisions must be interpretable. Our goal was to build a system that is both accurate and transparent. This project was developed collaboratively with Priyadarshan R and Navaneeth K.
 
-Expanding upon the great research works of Fahad Almalki ("Financial fraud detection using explainable AI and stacking ensemble methods"), my goal was to maximize fraud detection accuracy on complex tabular datasets while maintaining complete transparency into the model's decision-making process.
+Feature Engineering
 
-Here's how I approached the solution:
-🛠️ **Advanced Feature Engineering**: Designed behavioral pattern features, including rolling transaction sequences, geographic travel discrepancies using Haversine distances, and burst activity trackers.
-⚖️ **Handling Imbalance**: Optimized boundary detection natively through `scale_pos_weight` weighting techniques directly across gradient losses.
-🧠 **Ensemble Architecture**: Trained, tuned, and combined a powerful ensemble of gradient-boosted machines including **LightGBM**, **XGBoost**, and **CatBoost**.
-🎛️ **Optuna Tuning**: Performed rigorous hyperparameter optimization across 50 trials.
-🔍 **Explainable AI (SHAP)**: Extracted global model interpretability using 8,000 tree-explainer SHAP samples to understand exactly *why* certain transactions are flagged as fraudulent.
+We designed behavioral and spatial features to capture hidden patterns:
 
-**The Results (Final Ensemble):**
-🚀 **PR-AUC:** 0.9819  |  **ROC-AUC:** 0.9997 
-🎯 **Precision:** 95.80% |  **Recall:** 93.65%  |  **F1-Score:** 94.71%  
+amt_zscore_global: identifies unusual transaction amounts
+amt_roll_mean_3: tracks recent spending trends
+txn_ratio: detects burst activity
+distance_km / distance_anomaly: flags inconsistent geographic movement
+Feature Selection with SHAP
 
-By relying on dynamic behavioral shifts, geographic anomalies, and ensemble learning, the model is able to incredibly isolate fraudulent behavior with extremely high precision.
+We used SHAP for both interpretability and feature selection. Using 8,000 samples, we identified key drivers and removed low-value features. The most influential features were amt_zscore_global, amt_roll_mean_3, and hour, validating our approach.
 
-Check out the full notebook, SHAP analysis, and metrics breakdown in my Outputs section.
-[Insert Repository Link]
+Ensemble Architecture
 
-#MachineLearning #DataScience #FraudDetection #XGBoost #CatBoost #LightGBM #ExplainableAI #SHAP #EnsembleLearning
-**[Draft End]**
+We trained LightGBM, XGBoost, and CatBoost in parallel. Class imbalance was handled using scale_pos_weight, avoiding synthetic oversampling. Hyperparameters were optimized using Optuna across 50 trials.
 
----
+Results
+
+PR-AUC: 0.9819 | ROC-AUC: 0.9997
+Precision: 95.80% | Recall: 93.65% | F1-Score: 94.71%
+
+Cross Validation:
+PR-AUC: 0.9165 | ROC-AUC: 0.9977 | Precision: 92.95% | Recall: 78.69% | F1-Score: 85.23%
+
+To ensure robustness, we performed cross-validation using the Sparkov synthetic dataset. The consistency of SHAP-selected feature importance across two independent data distributions indicates that the model captures genuine fraud behavior rather than dataset-specific patterns.
+
+🔗 Repository:
+https://github.com/Priyan246/Fraud-Detection-in-Financial-Transactions-using-Ensemble-Learning
+
+#MachineLearning #DataScience #FraudDetection #ExplainableAI #SHAP #EnsembleLearning #Optuna
 
 ## 🏗️ Pipeline Architecture & Feature Engineering
 
@@ -74,7 +81,16 @@ Evaluation prioritized **PR-AUC** (Precision-Recall Area under Curve) as precisi
 | **Ensemble (Average)** | **0.9819** | **0.9997** | **0.9580** | **0.9365** | **0.9471** | **0.731** |
 
 ---
+## Cross-Evaluation Results — Sparkov Dataset
 
+Models trained on the primary dataset were evaluated zero-shot on the Sparkov synthetic transaction benchmark to assess generalizability across distributions.
+
+| Model | PR-AUC | ROC-AUC | Precision | Recall | F1-Score | Optimal Threshold |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **LightGBM** | 0.8928 | 0.9969 | 0.8767 | 0.7893 | 0.8307 | 0.962 |
+| **XGBoost** | 0.9184 | 0.9980 | 0.8910 | 0.8154 | 0.8515 | 0.970 |
+| **CatBoost** | 0.9119 | 0.9972 | 0.8934 | 0.8163 | 0.8531 | 0.969 |
+| **Ensemble (Average)** | **0.9165** | **0.9977** | **0.9295** | **0.7869** | **0.8523** | **0.967** |
 ## 🕵️ Explainable AI (SHAP)
 Transparency is critical in financial algorithms, a core concept echoed by Fahad Almalki. **SHAP (SHapley Additive exPlanations)** was leveraged to globally translate and validate model logic using 8,000 observation extractions.
 
