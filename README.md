@@ -74,7 +74,16 @@ Evaluation prioritized **PR-AUC** (Precision-Recall Area under Curve) as precisi
 | **Ensemble (Average)** | **0.9819** | **0.9997** | **0.9580** | **0.9365** | **0.9471** | **0.731** |
 
 ---
+## Cross-Evaluation Results — Sparkov Dataset
 
+Models trained on the primary dataset were evaluated zero-shot on the Sparkov synthetic transaction benchmark to assess generalizability across distributions.
+
+| Model | PR-AUC | ROC-AUC | Precision | Recall | F1-Score | Optimal Threshold |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **LightGBM** | 0.8928 | 0.9969 | 0.8767 | 0.7893 | 0.8307 | 0.962 |
+| **XGBoost** | 0.9184 | 0.9980 | 0.8910 | 0.8154 | 0.8515 | 0.970 |
+| **CatBoost** | 0.9119 | 0.9972 | 0.8934 | 0.8163 | 0.8531 | 0.969 |
+| **Ensemble (Average)** | **0.9165** | **0.9977** | **0.9295** | **0.7869** | **0.8523** | **0.967** |
 ## 🕵️ Explainable AI (SHAP)
 Transparency is critical in financial algorithms, a core concept echoed by Fahad Almalki. **SHAP (SHapley Additive exPlanations)** was leveraged to globally translate and validate model logic using 8,000 observation extractions.
 
